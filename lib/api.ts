@@ -1,3 +1,4 @@
+// lib/api.ts
 // This file handles API interactions for collections and NFTs
 
 // Function to fetch trending collections
@@ -20,8 +21,41 @@ export async function fetchTrendingCollections() {
       image: "/placeholder.svg?height=100&width=100",
       items: 50,
       floorPrice: "0.2 FIL",
+      isGold: true,
     },
-    // More collections...
+    {
+      id: "pixel-landscapes",
+      name: "Pixel Landscapes",
+      creator: "0x7890...1234",
+      image: "/placeholder.svg?height=100&width=100",
+      items: 60,
+      floorPrice: "0.08 FIL",
+    },
+    {
+      id: "retro-arcade",
+      name: "Retro Arcade",
+      creator: "0x2345...6789",
+      image: "/placeholder.svg?height=100&width=100",
+      items: 110,
+      floorPrice: "0.18 FIL",
+    },
+    {
+      id: "pixel-heroes",
+      name: "Pixel Heroes",
+      creator: "0x8901...2345",
+      image: "/placeholder.svg?height=100&width=100",
+      items: 95,
+      floorPrice: "0.22 FIL",
+      isGold: true,
+    },
+    {
+      id: "8bit-cities",
+      name: "8-Bit Cities",
+      creator: "0x4567...8901",
+      image: "/placeholder.svg?height=100&width=100",
+      items: 70,
+      floorPrice: "0.15 FIL",
+    },
   ]
 }
 
@@ -29,6 +63,8 @@ export async function fetchTrendingCollections() {
 export async function fetchCollection(id: string) {
   // This would be replaced with an actual API call
   // For now, returning mock data based on the ID
+  const isGold = id.includes('gold') || id.includes('golden')
+  
   return {
     id,
     name: id
@@ -37,6 +73,7 @@ export async function fetchCollection(id: string) {
       .join(" "),
     creator: "0x1234...5678",
     description: `A collection of pixel art NFTs featuring ${id.replace(/-/g, " ")} minted on Filecoin`,
+    isGold,
     items: Array(8)
       .fill(null)
       .map((_, i) => ({
@@ -47,6 +84,7 @@ export async function fetchCollection(id: string) {
           .join(" ")} #${i + 1}`,
         image: `/placeholder.svg?height=300&width=300`,
         price: (0.1 + i * 0.05).toFixed(2),
+        isGold: isGold || i % 4 === 0, // Make some NFTs gold
       })),
   }
 }
@@ -55,13 +93,87 @@ export async function fetchCollection(id: string) {
 export async function fetchUserNFTs(address: string) {
   // This would be replaced with an actual API call
   // For now, returning mock data
-  return Array(4)
+  return Array(6)
     .fill(null)
     .map((_, i) => ({
       id: i,
       name: `My Pixel NFT #${i + 1}`,
       image: `/placeholder.svg?height=300&width=300`,
-      collection: "My Collection",
+      collection: i % 2 === 0 ? "Pixel Animals" : "Golden Creatures",
+      collectionId: i % 2 === 0 ? "pixel-animals" : "golden-creatures",
       acquired: new Date().toISOString(),
+      status: i % 3 === 0 ? "listed" : "owned",
+      isGold: i === 0 || i === 3, // Make some NFTs gold
     }))
+}
+
+// lib/lilypad.ts
+// This file handles interactions with the Lilypad API for AI model access
+
+// Function to generate prompts using Llama 3.1
+export async function generatePrompts(theme: string): Promise<string[]> {
+  try {
+    // Since we're mocking the API call, let's return some themed prompts
+    // In a real implementation, this would call the API endpoint
+    await new Promise(resolve => setTimeout(resolve, 1200)) // Simulate API delay
+    
+    const basePrompts = [
+      "pixel-art, 8-bit style, low-res, vibrant colors",
+      "retro game style, pixelated, 16-bit era, detailed",
+      "pixel art, low-resolution, blocky, crisp edges",
+      "8-bit pixel character, vibrant palette, game sprite style"
+    ]
+    
+    // Add the theme to each prompt
+    return basePrompts.map(prompt => 
+      `${theme}, ${prompt}${Math.random() > 0.75 ? ', gold accents, rare' : ''}`
+    )
+  } catch (error) {
+    console.error("Failed to generate prompts:", error)
+    throw error
+  }
+}
+
+// Function to generate images using Stable Diffusion XL
+export async function generateImages(prompts: string[]): Promise<string[]> {
+  try {
+    // In a real implementation, this would call the API endpoint
+    // For now, we'll just return placeholder images
+    await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate API delay
+    
+    return prompts.map((_, index) => 
+      `/placeholder.svg?height=${300 + index * 10}&width=${300 + index * 10}`
+    )
+  } catch (error) {
+    console.error("Failed to generate images:", error)
+    throw error
+  }
+}
+
+// Function to upload image to IPFS/Filecoin
+export async function uploadToIPFS(imageData: string): Promise<string> {
+  try {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    // Return a mock CID
+    return "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
+  } catch (error) {
+    console.error("Failed to upload to IPFS:", error)
+    throw error
+  }
+}
+
+// Function to mint NFT on Filecoin
+export async function mintNFT(metadata: any): Promise<string> {
+  try {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // Return a mock token ID
+    return "0x" + Math.random().toString(16).slice(2, 10)
+  } catch (error) {
+    console.error("Failed to mint NFT:", error)
+    throw error
+  }
 }

@@ -18,12 +18,14 @@ export function Sidebar() {
   ]
 
   return (
-    <div className="w-16 md:w-64 h-screen bg-gray-900/95 border-r border-gray-800 flex flex-col fixed z-50 pixel-corners">
+    <div className="w-16 md:w-64 h-screen bg-gray-900/95 border-r border-gray-800 flex flex-col fixed left-0 top-0 z-50 pixel-corners">
       <div className="p-4 border-b border-gray-800 flex items-center justify-center md:justify-start">
-        <div className="font-pixel text-xl text-transparent bg-clip-text bg-gradient-to-r from-pixel-green to-pixel-blue hidden md:block">
-          PixelNFT
-        </div>
-        <div className="md:hidden text-pixel-green font-bold text-xl font-pixel">PX</div>
+        <Link href="/">
+          <div className="font-pixel text-xl text-transparent bg-clip-text bg-gradient-to-r from-pixel-green to-pixel-blue hidden md:block">
+            PixelNFT
+          </div>
+          <div className="md:hidden text-pixel-green font-bold text-xl font-pixel">PX</div>
+        </Link>
       </div>
 
       <nav className="flex-1 p-2">
@@ -36,7 +38,7 @@ export function Sidebar() {
                     "flex items-center space-x-3 px-3 py-2 text-sm transition-colors pixel-corners",
                     pathname === item.href
                       ? "bg-gray-800 text-pixel-green pixel-glow"
-                      : "text-gray-400 hover:text-white hover:bg-gray-800/50",
+                      : "text-gray-400 hover:text-white hover:bg-gray-800/50"
                   )}
                 >
                   <PixelIcon icon={item.icon} className="h-5 w-5" />
