@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     // Initialize Lilypad client
     const client = new OpenAI({
       baseURL: "https://anura-testnet.lilypad.tech/api/v1",
-      apiKey: process.env.ANURA_API_KEY,
+      apiKey: process.env.LILYPAD_API_KEY,
     })
 
     // Generate prompts using Llama 3.1
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: "You are a helpful AI assistant specialized in creating pixel art prompts.",
+          content: "You are a helpful AI assistant specialized in creating pixel art prompts to be given to stable diffusion XL model.",
         },
         {
           role: "user",
