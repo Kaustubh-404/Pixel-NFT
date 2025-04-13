@@ -3,7 +3,7 @@ import OpenAI from "openai"
 
 export async function POST(request: Request) {
   try {
-    const { theme } = await request.json()
+    const { theme, numPrompts } = await request.json()
 
     if (!theme) {
       return NextResponse.json({ error: "Theme is required" }, { status: 400 })
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
         },
         {
           role: "user",
-          content: `Give me 4 prompts for pixel art NFTs to be given to stable diffusion XL model. They should be small, detailed and in phrases, not full sentences. I am making NFTs based on ${theme} and having the gold color for rare ones. Give me prompts in one line and not in different lines. Sample prompt - "haunted house, pixel-art, low-res, blocky, pixel art style, 8-bit graphics, colorful"`,
+          content: `Give me ${numPrompts} prompts for pixel art NFTs to be given to stable diffusion XL model. They should be small, detailed and in phrases, not full sentences. I am making NFTs based on ${theme} and having the gold color for rare ones. Give me prompts in one line and not in different lines. Your reply should only be the prompts and they should be in quotes and seperated by commas. Sample prompt - "haunted house, pixel-art, low-res, blocky, pixel art style, 8-bit graphics, colorful"`,
         },
       ],
     })
