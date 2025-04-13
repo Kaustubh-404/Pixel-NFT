@@ -1,12 +1,12 @@
 // app/layout.tsx
 import type React from "react"
 import { ThemeProvider } from "@/components/theme-provider"
-import { WalletProvider } from "@/components/wallet-provider"
+import { WalletProvider } from "@/components/providers/wallet-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { Press_Start_2P } from "next/font/google"
 import { Inter } from "next/font/google"
 import { cn } from "@/lib/utils"
-import Layout from "@/components/layout"  // Import the custom layout component
+import Layout from "@/components/layout"
 import "@/app/globals.css"
 
 const fontSans = Inter({

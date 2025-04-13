@@ -1,206 +1,580 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Sidebar } from "@/components/sidebar"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import Link from "next/link"
-import Image from "next/image"
-import { fetchTrendingCollections } from "@/lib/api"
-import { Search } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { NFTCard } from "@/components/nft-card"
+import { useAccount } from "wagmi"
+import { ConnectWalletButton } from "@/components/connect-wallet-button"
+import { useToast } from "@/components/ui/use-toast"
 import { PixelHeading } from "@/components/pixel-heading"
 import { PixelatedBackground } from "@/components/pixelated-background"
 import { PixelLoading } from "@/components/pixel-loading"
+import { ArrowUpDown, Filter } from "lucide-react"
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import Link from "next/link"
+import { Rarity } from "@/lib/contracts/nft-contract"
+import { ListNFTDialog } from "@/components/list-nft-dialog"
 
-export default function ExplorePage() {
-  const [collections, setCollections] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState("trending")
+// For demo purposes, we'll simulate fetching user NFTs
+// In a real implementation, this would come from the blockchain and IPFS
+const fetchUserNFTs = async (address: string) => {
+  // Add a little delay to simulate API call
+  await new Promise(resolve => setTimeout(resolve, 800))
+  
+  return Array(6)
+    .fill(null)
+    .map((_, i) => ({
+      id: `token_${i}`,
+      name: `My Pixel NFT #${i + 1}`,
+      image: `/placeholder.svg?height=300&width=300`,
+      collection: i % 2 === 0 ? "Pixel Animals" : "Golden Creatures",
+      collectionId: i % 2 === 0 ? "pixel-animals" : "golden-creatures",
+      acquired: new Date().toISOString(),
+      status: i % 3 === 0 ? "listed" : "owned",
+      rarity: i % 3 === 0 ? Rarity.S_TIER : (i % 3 === 1 ? Rarity.A_TIER : Rarity.B_TIER),
+      price: (0.1 + i * 0.05).toFixed(2),
+      metadataUrl: `ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi_${i}`,
+      isListed: i % 3 === 0,
+      isOwned: true,
+      listingId: i % 3 === 0 ? `listing_${i}` : undefined
+    }))
+}
+
+export default function MyNFTsPage() {
+  const { address, isConnected } = useAccount()
+  const [userNFTs, setUserNFTs] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [filter, setFilter] = useState("all")
+  const [sortBy, setSortBy] = useState("recent")
+  const [selectedNFT, setSelectedNFT] = useState<any>(null)
+  const [showListDialog, setShowListDialog] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
-    const loadCollections = async () => {
+    const loadUserData = async () => {
+      if (!isConnected || !address) return
+
       setLoading(true)
       try {
-        // This would be replaced with an actual API call with filters
-        const data = await fetchTrendingCollections()
-
-        // Add more mock collections for the explore page
-        const moreCollections = [
-          {
-            id: "pixel-monsters",
-            name: "Pixel Monsters",
-            creator: "0x5678...9012",
-            image: "/placeholder.svg?height=100&width=100",
-            items: 85,
-            floorPrice: "0.12 FIL",
-          },
-          {
-            id: "crypto-punks-pixel",
-            name: "Crypto Punks Pixel",
-            creator: "0x3456...7890",
-            image: "/placeholder.svg?height=100&width=100",
-            items: 150,
-            floorPrice: "0.3 FIL",
-            isGold: true,
-          },
-          {
-            id: "pixel-landscapes",
-            name: "Pixel Landscapes",
-            creator: "0x7890...1234",
-            image: "/placeholder.svg?height=100&width=100",
-            items: 60,
-            floorPrice: "0.08 FIL",
-          },
-          {
-            id: "retro-arcade",
-            name: "Retro Arcade",
-            creator: "0x2345...6789",
-            image: "/placeholder.svg?height=100&width=100",
-            items: 110,
-            floorPrice: "0.18 FIL",
-          },
-          {
-            id: "pixel-heroes",
-            name: "Pixel Heroes",
-            creator: "0x8901...2345",
-            image: "/placeholder.svg?height=100&width=100",
-            items: 95,
-            floorPrice: "0.22 FIL",
-            isGold: true,
-          },
-          {
-            id: "8bit-cities",
-            name: "8-Bit Cities",
-            creator: "0x4567...8901",
-            image: "/placeholder.svg?height=100&width=100",
-            items: 70,
-            floorPrice: "0.15 FIL",
-          },
-        ]
-
-        setCollections([...data, ...moreCollections])
+        const nfts = await fetchUserNFTs(address)
+        setUserNFTs(nfts)
       } catch (error) {
-        console.error("Failed to load collections:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load your NFTs",
+          variant: "destructive",
+        })
       } finally {
         setLoading(false)
       }
     }
 
-    loadCollections()
-  }, [])
+    loadUserData()
+  }, [address, isConnected, toast])
 
-  const filteredCollections = collections.filter((collection) =>
-    collection.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
-
-  const sortedCollections = [...filteredCollections].sort((a, b) => {
-    if (sortBy === "price-low") {
-      return Number.parseFloat(a.floorPrice) - Number.parseFloat(b.floorPrice)
-    } else if (sortBy === "price-high") {
-      return Number.parseFloat(b.floorPrice) - Number.parseFloat(a.floorPrice)
-    } else if (sortBy === "items") {
-      return b.items - a.items
-    }
-    // Default: trending
-    return 0
+  // Filter NFTs based on the selected filter
+  const filteredNFTs = userNFTs.filter(nft => {
+    if (filter === "all") return true
+    if (filter === "listed") return nft.isListed
+    if (filter === "owned") return !nft.isListed
+    if (filter === "stier") return nft.rarity === Rarity.S_TIER
+    if (filter === "atier") return nft.rarity === Rarity.A_TIER
+    if (filter === "btier") return nft.rarity === Rarity.B_TIER
+    return true
   })
 
+  // Sort NFTs based on the selected sort option
+  const sortedNFTs = [...filteredNFTs].sort((a, b) => {
+    if (sortBy === "price-low") return parseFloat(a.price) - parseFloat(b.price)
+    if (sortBy === "price-high") return parseFloat(b.price) - parseFloat(a.price)
+    if (sortBy === "rarity-high") return b.rarity - a.rarity
+    if (sortBy === "rarity-low") return a.rarity - b.rarity
+    // For "recent" (default), keep the original order which simulates most recent first
+    return 0
+  })
+  
+  const handleListNFT = (nft: any) => {
+    setSelectedNFT(nft)
+    setShowListDialog(true)
+  }
+
   return (
-    <div className="flex min-h-screen bg-gray-950 text-white">
-      <Sidebar />
-      <main className="flex-1 p-6 relative">
-        <PixelatedBackground />
+    <div className="relative">
+      <PixelatedBackground />
+      
+      <PixelHeading
+        text="My NFTs"
+        className="text-2xl mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pixel-green to-pixel-blue"
+      />
 
-        <PixelHeading
-          text="Explore Collections"
-          className="text-2xl mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pixel-green to-pixel-blue"
-        />
-
-        <div className="flex flex-col md:flex-row gap-4 mb-8 relative z-10">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search collections..."
-              className="pl-10 bg-gray-900/80 border-gray-800 rounded-none pixel-corners"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full md:w-[180px] bg-gray-900/80 border-gray-800 rounded-none pixel-corners">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900 border-gray-800 rounded-none pixel-corners">
-              <SelectItem value="trending" className="font-pixel text-xs">
-                Trending
-              </SelectItem>
-              <SelectItem value="price-low" className="font-pixel text-xs">
-                Price: Low to High
-              </SelectItem>
-              <SelectItem value="price-high" className="font-pixel text-xs">
-                Price: High to Low
-              </SelectItem>
-              <SelectItem value="items" className="font-pixel text-xs">
-                Most Items
-              </SelectItem>
-            </SelectContent>
-          </Select>
+      {!isConnected ? (
+        <div className="flex flex-col items-center justify-center h-64 bg-gray-900/80 rounded-none border border-gray-800 pixel-corners relative z-10">
+          <p className="text-gray-400 mb-4 font-pixel text-xs">Connect your wallet to view your NFTs</p>
+          <ConnectWalletButton />
         </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <PixelLoading />
-          </div>
-        ) : sortedCollections.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
-            {sortedCollections.map((collection) => (
-              <Link key={collection.id} href={`/collection/${collection.id}`}>
-                <div
-                  className={`bg-gray-900/80 border border-gray-800 rounded-none overflow-hidden hover:border-pixel-green transition-colors h-full flex flex-col pixel-corners relative ${collection.isGold ? "gold-gradient" : ""}`}
+      ) : (
+        <div className="relative z-10">
+          <Tabs defaultValue="all" className="w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <TabsList className="bg-gray-900/80 border-gray-800 rounded-none pixel-corners">
+                <TabsTrigger 
+                  value="all" 
+                  onClick={() => setFilter("all")}
+                  className="data-[state=active]:bg-gray-800 rounded-none font-pixel text-xs"
                 >
-                  <div className={`relative aspect-video ${collection.isGold ? "bg-black/50" : ""}`}>
-                    <Image
-                      src={collection.image || "/placeholder.svg"}
-                      alt={collection.name}
-                      fill
-                      className="object-cover pixelated"
-                    />
-                  </div>
-                  <div className="p-4 flex-1">
-                    <h3 className="font-pixel text-xs mb-1">{collection.name}</h3>
-                    <p className="text-sm text-gray-400 mb-3">by {collection.creator}</p>
-                    <div className="flex justify-between text-sm">
-                      <div>
-                        <p className="text-gray-400 font-pixel text-[10px]">Items</p>
-                        <p className="font-medium">{collection.items}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400 font-pixel text-[10px]">Floor</p>
-                        <p className={collection.isGold ? "text-gold-400 font-medium" : "text-pixel-green font-medium"}>
-                          {collection.floorPrice}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  All NFTs
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="listed" 
+                  onClick={() => setFilter("listed")}
+                  className="data-[state=active]:bg-gray-800 rounded-none font-pixel text-xs"
+                >
+                  Listed
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="owned" 
+                  onClick={() => setFilter("owned")}
+                  className="data-[state=active]:bg-gray-800 rounded-none font-pixel text-xs"
+                >
+                  Not Listed
+                </TabsTrigger>
+              </TabsList>
+              
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="bg-gray-900/80 border-gray-800 rounded-none pixel-corners">
+                      <ArrowUpDown className="mr-1 h-3 w-3" />
+                      <span className="font-pixel text-[10px]">SORT</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-gray-900 border-gray-800 rounded-none pixel-corners">
+                    <DropdownMenuLabel className="font-pixel text-xs">Sort By</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-gray-800" />
+                    <DropdownMenuItem 
+                      className="font-pixel text-[10px]" 
+                      onClick={() => setSortBy("recent")}
+                    >
+                      Most Recent
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="font-pixel text-[10px]" 
+                      onClick={() => setSortBy("price-low")}
+                    >
+                      Price: Low to High
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="font-pixel text-[10px]" 
+                      onClick={() => setSortBy("price-high")}
+                    >
+                      Price: High to Low
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="font-pixel text-[10px]" 
+                      onClick={() => setSortBy("rarity-high")}
+                    >
+                      Rarity: High to Low
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="font-pixel text-[10px]" 
+                      onClick={() => setSortBy("rarity-low")}
+                    >
+                      Rarity: Low to High
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="bg-gray-900/80 border-gray-800 rounded-none pixel-corners"
+                    >
+                      <Filter className="mr-1 h-3 w-3" />
+                      <span className="font-pixel text-[10px]">FILTER</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-gray-900 border-gray-800 rounded-none pixel-corners">
+                    <DropdownMenuLabel className="font-pixel text-xs">Rarity</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-gray-800" />
+                    <DropdownMenuItem 
+                      className="font-pixel text-[10px]" 
+                      onClick={() => setFilter("all")}
+                    >
+                      All Rarities
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="font-pixel text-[10px] gold-gradient text-black" 
+                      onClick={() => setFilter("stier")}
+                    >
+                      S-Tier Only
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="font-pixel text-[10px] text-pixel-purple" 
+                      onClick={() => setFilter("atier")}
+                    >
+                      A-Tier Only
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="font-pixel text-[10px] text-pixel-blue" 
+                      onClick={() => setFilter("btier")}
+                    >
+                      B-Tier Only
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-gray-900/80 border-gray-800 rounded-none pixel-corners"
+                  onClick={() => {
+                    setFilter("all")
+                    setSortBy("recent")
+                  }}
+                >
+                  <span className="font-pixel text-[10px]">RESET</span>
+                </Button>
+              </div>
+            </div>
+            
+            <TabsContent value="all" className="mt-0">
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <PixelLoading />
                 </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-64 bg-gray-900/80 rounded-none border border-gray-800 pixel-corners relative z-10">
-            <p className="text-gray-400 mb-4 font-pixel text-xs">No collections found</p>
-            <Button
-              onClick={() => setSearchQuery("")}
-              className="bg-pixel-green hover:bg-pixel-green/80 text-black font-pixel rounded-none pixel-corners pixel-btn"
-            >
-              <span className="font-pixel text-xs">CLEAR SEARCH</span>
-            </Button>
-          </div>
-        )}
-      </main>
+              ) : sortedNFTs.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {sortedNFTs.map((nft) => (
+                    <NFTCard
+                      key={nft.id}
+                      id={nft.id}
+                      name={nft.name}
+                      image={nft.image}
+                      price={nft.price}
+                      collectionId={nft.collectionId}
+                      rarity={nft.rarity}
+                      isListed={nft.isListed}
+                      isOwned={true}
+                      listingId={nft.listingId}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 bg-gray-900/80 rounded-none border border-gray-800 pixel-corners">
+                  <p className="text-gray-400 mb-4 font-pixel text-xs">No NFTs found with the current filter</p>
+                  <Button
+                    onClick={() => setFilter("all")}
+                    className="bg-pixel-green hover:bg-pixel-green/80 text-black font-pixel rounded-none pixel-corners pixel-btn"
+                  >
+                    <span className="font-pixel text-xs">VIEW ALL NFTs</span>
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="listed" className="mt-0">
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <PixelLoading />
+                </div>
+              ) : sortedNFTs.some(nft => nft.isListed) ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {sortedNFTs.filter(nft => nft.isListed).map((nft) => (
+                    <NFTCard
+                      key={nft.id}
+                      id={nft.id}
+                      name={nft.name}
+                      image={nft.image}
+                      price={nft.price}
+                      collectionId={nft.collectionId}
+                      rarity={nft.rarity}
+                      isListed={true}
+                      isOwned={true}
+                      listingId={nft.listingId}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 bg-gray-900/80 rounded-none border border-gray-800 pixel-corners">
+                  <p className="text-gray-400 mb-4 font-pixel text-xs">You haven't listed any NFTs for sale</p>
+                  <Button
+                    asChild
+                    className="bg-pixel-green hover:bg-pixel-green/80 text-black font-pixel rounded-none pixel-corners pixel-btn"
+                  >
+                    <Link href="/explore">
+                      <span className="font-pixel text-xs">EXPLORE MARKETPLACE</span>
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="owned" className="mt-0">
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <PixelLoading />
+                </div>
+              ) : sortedNFTs.some(nft => !nft.isListed) ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {sortedNFTs.filter(nft => !nft.isListed).map((nft) => (
+                    <NFTCard
+                      key={nft.id}
+                      id={nft.id}
+                      name={nft.name}
+                      image={nft.image}
+                      price={nft.price}
+                      collectionId={nft.collectionId}
+                      rarity={nft.rarity}
+                      isListed={false}
+                      isOwned={true}
+                      listingId={nft.listingId}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 bg-gray-900/80 rounded-none border border-gray-800 pixel-corners">
+                  <p className="text-gray-400 mb-4 font-pixel text-xs">All of your NFTs are currently listed for sale</p>
+                  <Button
+                    asChild
+                    className="bg-pixel-blue hover:bg-pixel-blue/80 text-white font-pixel rounded-none pixel-corners pixel-btn"
+                  >
+                    <Link href="/create">
+                      <span className="font-pixel text-xs">CREATE NEW NFTs</span>
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
+      
+      {/* NFT Listing Dialog */}
+      {selectedNFT && (
+        <ListNFTDialog 
+          open={showListDialog} 
+          onOpenChange={setShowListDialog}
+          nft={selectedNFT}
+        />
+      )}
     </div>
   )
 }
+
+
+// "use client"
+
+// import { useState, useEffect } from "react"
+// import { Sidebar } from "@/components/sidebar"
+// import { Input } from "@/components/ui/input"
+// import { Button } from "@/components/ui/button"
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+// import Link from "next/link"
+// import Image from "next/image"
+// import { fetchTrendingCollections } from "@/lib/api"
+// import { Search } from "lucide-react"
+// import { PixelHeading } from "@/components/pixel-heading"
+// import { PixelatedBackground } from "@/components/pixelated-background"
+// import { PixelLoading } from "@/components/pixel-loading"
+
+// export default function ExplorePage() {
+//   const [collections, setCollections] = useState<any[]>([])
+//   const [loading, setLoading] = useState(true)
+//   const [searchQuery, setSearchQuery] = useState("")
+//   const [sortBy, setSortBy] = useState("trending")
+
+//   useEffect(() => {
+//     const loadCollections = async () => {
+//       setLoading(true)
+//       try {
+//         // This would be replaced with an actual API call with filters
+//         const data = await fetchTrendingCollections()
+
+//         // Add more mock collections for the explore page
+//         const moreCollections = [
+//           {
+//             id: "pixel-monsters",
+//             name: "Pixel Monsters",
+//             creator: "0x5678...9012",
+//             image: "/placeholder.svg?height=100&width=100",
+//             items: 85,
+//             floorPrice: "0.12 FIL",
+//           },
+//           {
+//             id: "crypto-punks-pixel",
+//             name: "Crypto Punks Pixel",
+//             creator: "0x3456...7890",
+//             image: "/placeholder.svg?height=100&width=100",
+//             items: 150,
+//             floorPrice: "0.3 FIL",
+//             isGold: true,
+//           },
+//           {
+//             id: "pixel-landscapes",
+//             name: "Pixel Landscapes",
+//             creator: "0x7890...1234",
+//             image: "/placeholder.svg?height=100&width=100",
+//             items: 60,
+//             floorPrice: "0.08 FIL",
+//           },
+//           {
+//             id: "retro-arcade",
+//             name: "Retro Arcade",
+//             creator: "0x2345...6789",
+//             image: "/placeholder.svg?height=100&width=100",
+//             items: 110,
+//             floorPrice: "0.18 FIL",
+//           },
+//           {
+//             id: "pixel-heroes",
+//             name: "Pixel Heroes",
+//             creator: "0x8901...2345",
+//             image: "/placeholder.svg?height=100&width=100",
+//             items: 95,
+//             floorPrice: "0.22 FIL",
+//             isGold: true,
+//           },
+//           {
+//             id: "8bit-cities",
+//             name: "8-Bit Cities",
+//             creator: "0x4567...8901",
+//             image: "/placeholder.svg?height=100&width=100",
+//             items: 70,
+//             floorPrice: "0.15 FIL",
+//           },
+//         ]
+
+//         setCollections([...data, ...moreCollections])
+//       } catch (error) {
+//         console.error("Failed to load collections:", error)
+//       } finally {
+//         setLoading(false)
+//       }
+//     }
+
+//     loadCollections()
+//   }, [])
+
+//   const filteredCollections = collections.filter((collection) =>
+//     collection.name.toLowerCase().includes(searchQuery.toLowerCase()),
+//   )
+
+//   const sortedCollections = [...filteredCollections].sort((a, b) => {
+//     if (sortBy === "price-low") {
+//       return Number.parseFloat(a.floorPrice) - Number.parseFloat(b.floorPrice)
+//     } else if (sortBy === "price-high") {
+//       return Number.parseFloat(b.floorPrice) - Number.parseFloat(a.floorPrice)
+//     } else if (sortBy === "items") {
+//       return b.items - a.items
+//     }
+//     // Default: trending
+//     return 0
+//   })
+
+//   return (
+//     <div className="flex min-h-screen bg-gray-950 text-white">
+//       <Sidebar />
+//       <main className="flex-1 p-6 relative">
+//         <PixelatedBackground />
+
+//         <PixelHeading
+//           text="Explore Collections"
+//           className="text-2xl mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pixel-green to-pixel-blue"
+//         />
+
+//         <div className="flex flex-col md:flex-row gap-4 mb-8 relative z-10">
+//           <div className="relative flex-1">
+//             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+//             <Input
+//               type="text"
+//               placeholder="Search collections..."
+//               className="pl-10 bg-gray-900/80 border-gray-800 rounded-none pixel-corners"
+//               value={searchQuery}
+//               onChange={(e) => setSearchQuery(e.target.value)}
+//             />
+//           </div>
+//           <Select value={sortBy} onValueChange={setSortBy}>
+//             <SelectTrigger className="w-full md:w-[180px] bg-gray-900/80 border-gray-800 rounded-none pixel-corners">
+//               <SelectValue placeholder="Sort by" />
+//             </SelectTrigger>
+//             <SelectContent className="bg-gray-900 border-gray-800 rounded-none pixel-corners">
+//               <SelectItem value="trending" className="font-pixel text-xs">
+//                 Trending
+//               </SelectItem>
+//               <SelectItem value="price-low" className="font-pixel text-xs">
+//                 Price: Low to High
+//               </SelectItem>
+//               <SelectItem value="price-high" className="font-pixel text-xs">
+//                 Price: High to Low
+//               </SelectItem>
+//               <SelectItem value="items" className="font-pixel text-xs">
+//                 Most Items
+//               </SelectItem>
+//             </SelectContent>
+//           </Select>
+//         </div>
+
+//         {loading ? (
+//           <div className="flex items-center justify-center h-64">
+//             <PixelLoading />
+//           </div>
+//         ) : sortedCollections.length > 0 ? (
+//           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative z-10">
+//             {sortedCollections.map((collection) => (
+//               <Link key={collection.id} href={`/collection/${collection.id}`}>
+//                 <div
+//                   className={`bg-gray-900/80 border border-gray-800 rounded-none overflow-hidden hover:border-pixel-green transition-colors h-full flex flex-col pixel-corners relative ${collection.isGold ? "gold-gradient" : ""}`}
+//                 >
+//                   <div className={`relative aspect-video ${collection.isGold ? "bg-black/50" : ""}`}>
+//                     <Image
+//                       src={collection.image || "/placeholder.svg"}
+//                       alt={collection.name}
+//                       fill
+//                       className="object-cover pixelated"
+//                     />
+//                   </div>
+//                   <div className="p-4 flex-1">
+//                     <h3 className="font-pixel text-xs mb-1">{collection.name}</h3>
+//                     <p className="text-sm text-gray-400 mb-3">by {collection.creator}</p>
+//                     <div className="flex justify-between text-sm">
+//                       <div>
+//                         <p className="text-gray-400 font-pixel text-[10px]">Items</p>
+//                         <p className="font-medium">{collection.items}</p>
+//                       </div>
+//                       <div>
+//                         <p className="text-gray-400 font-pixel text-[10px]">Floor</p>
+//                         <p className={collection.isGold ? "text-gold-400 font-medium" : "text-pixel-green font-medium"}>
+//                           {collection.floorPrice}
+//                         </p>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </Link>
+//             ))}
+//           </div>
+//         ) : (
+//           <div className="flex flex-col items-center justify-center h-64 bg-gray-900/80 rounded-none border border-gray-800 pixel-corners relative z-10">
+//             <p className="text-gray-400 mb-4 font-pixel text-xs">No collections found</p>
+//             <Button
+//               onClick={() => setSearchQuery("")}
+//               className="bg-pixel-green hover:bg-pixel-green/80 text-black font-pixel rounded-none pixel-corners pixel-btn"
+//             >
+//               <span className="font-pixel text-xs">CLEAR SEARCH</span>
+//             </Button>
+//           </div>
+//         )}
+//       </main>
+//     </div>
+//   )
+// }
