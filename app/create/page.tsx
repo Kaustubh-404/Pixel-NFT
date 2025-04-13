@@ -22,6 +22,7 @@ import {
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { ConnectWallet } from "@/components/connect-wallet"
 
 export default function CreatePage() {
   const router = useRouter()
@@ -447,7 +448,7 @@ export default function CreatePage() {
                   <div className="bg-gray-800/50 p-3 rounded-none pixel-corners">
                     <p className="text-gray-300 text-sm mb-2">Connect your wallet to mint NFTs on Filecoin Calibration Network</p>
                     <div className="flex justify-center">
-                      <ConnectButton />
+                      <ConnectWallet />
                     </div>
                   </div>
                 )}

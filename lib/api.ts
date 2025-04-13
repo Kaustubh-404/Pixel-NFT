@@ -203,9 +203,10 @@ export async function mintNFT(metadata: any): Promise<{
 }
 
 // Fetch trending collections
+// Function to fetch trending collections
 export async function fetchTrendingCollections() {
   // This would be replaced with an actual API call
-  // For now, returning mock data
+  // For now, returning mock data with unique IDs
   return [
     {
       id: "pixel-animals",
@@ -213,7 +214,7 @@ export async function fetchTrendingCollections() {
       creator: "0x1234...5678",
       image: "/placeholder.svg?height=100&width=100",
       items: 100,
-      floorPrice: "0.1 FIL",
+      floorPrice: "0.1 tFIL",
     },
     {
       id: "golden-creatures",
@@ -221,24 +222,24 @@ export async function fetchTrendingCollections() {
       creator: "0xabcd...efgh",
       image: "/placeholder.svg?height=100&width=100",
       items: 50,
-      floorPrice: "0.2 FIL",
+      floorPrice: "0.2 tFIL",
       isGold: true,
     },
     {
-      id: "pixel-landscapes",
-      name: "Pixel Landscapes",
+      id: "pixel-landscapes-02", // Ensured unique ID
+      name: "Pixel Landscapes 2",
       creator: "0x7890...1234",
       image: "/placeholder.svg?height=100&width=100",
       items: 60,
-      floorPrice: "0.08 FIL",
+      floorPrice: "0.08 tFIL",
     },
     {
-      id: "retro-arcade",
-      name: "Retro Arcade",
+      id: "retro-arcade-01", // Ensured unique ID
+      name: "Retro Arcade Classic",
       creator: "0x2345...6789",
       image: "/placeholder.svg?height=100&width=100",
       items: 110,
-      floorPrice: "0.18 FIL",
+      floorPrice: "0.18 tFIL",
     },
   ]
 }
