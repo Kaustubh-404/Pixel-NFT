@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
+import { ConnectButton } from "@rainbow-me/rainbowkit"
 
 export default function MyNFTsPage() {
   const { address, isConnected, connect } = useWallet()
@@ -106,12 +107,12 @@ export default function MyNFTsPage() {
       {!isConnected ? (
         <div className="flex flex-col items-center justify-center h-64 bg-gray-900/80 rounded-none border border-gray-800 pixel-corners relative z-10">
           <p className="text-gray-400 mb-4 font-pixel text-xs">Connect your wallet to view your NFTs</p>
-          <Button
+          <ConnectButton
             onClick={handleConnect}
             className="bg-pixel-green hover:bg-pixel-green/80 text-black font-pixel rounded-none pixel-corners pixel-btn"
           >
             <span className="font-pixel text-xs">CONNECT WALLET</span>
-          </Button>
+          </ConnectButton>
         </div>
       ) : (
         <div className="relative z-10">
