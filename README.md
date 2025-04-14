@@ -120,7 +120,7 @@ Check out the live demo of NiftyBAY: [https://pixel-nft-lemon.vercel.app/](https
 
 Project Maintainer - [@twitter_handle](https://twitter.com/FLACKK_)
 
-Project Link: [https://github.com/username/Pixel-NFT](https://github.com/Kaustubh-404/Pixel-NFT)
+Project Link: [https://github.com/Kaustubh-404/Pixel-NFT](https://github.com/Kaustubh-404/Pixel-NFT)
 
 ---
 
