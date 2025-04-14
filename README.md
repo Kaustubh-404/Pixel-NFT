@@ -1,10 +1,10 @@
-# PixelNFT: Decentralized NFT Platform
+# NiftyBAY: Decentralized NFT Platform
 
 > A Next.js powered platform for AI-generated NFTs using Lilypad and Filecoin
 
 A decentralized NFT minting, trading, and showcasing platform powered by Lilypad's AI capabilities and Filecoin's decentralized storage. Think of it as social media for NFTs, where users can flaunt, trade, and showcase their collections with ease.
 
-![PixelNFT Architecture Flowchart](./flowchart.png)
+![NiftyBAY Architecture Flowchart](./flowchart.png)
 
 
 ## ✨ Features
@@ -114,13 +114,13 @@ yarn dev
 
 ## 🔗 Demo
 
-Check out the live demo of PixelNFT: [https://pixel-nft-lemon.vercel.app/](https://pixel-nft-lemon.vercel.app/)
+Check out the live demo of NiftyBAY: [https://pixel-nft-lemon.vercel.app/](https://pixel-nft-lemon.vercel.app/)
 
 ## 📞 Contact
 
 Project Maintainer - [@twitter_handle](https://twitter.com/FLACKK_)
 
-Project Link: [https://github.com/username/pixelnft](https://github.com/Kaustubh-404/Pixel-NFT)
+Project Link: [https://github.com/username/Pixel-NFT](https://github.com/Kaustubh-404/Pixel-NFT)
 
 ---
 
